@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Window Cat Wordcatcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-shell">
+    <canvas id="game-canvas" width="1280" height="720"></canvas>
+    <div id="hud">
+      <div class="hud-left">
+        <div class="label">Time</div>
+        <div id="timer" class="value">00:30</div>
+      </div>
+      <div class="hud-center">
+        <div class="label">Caught</div>
+        <div id="caught-count" class="value">0</div>
+      </div>
+      <div class="hud-right">
+        <div class="label">Words</div>
+        <div id="word-stream" class="value"></div>
+      </div>
+    </div>
+    <div id="start-overlay" class="overlay visible">
+      <div class="panel">
+        <h1>Window Cat Wordcatcher</h1>
+        <p>Pick a mode, move the cat on the sill, catch what resonates. Arrows + Space / click to pounce.</p>
+        <div class="mode-select">
+          <div class="mode-title">Mode</div>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="cloud" checked>
+            <div>
+              <div class="mode-name">Word cloud</div>
+              <div class="mode-desc">Catch words, see them bloom at the end.</div>
+            </div>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="story">
+            <div>
+              <div class="mode-name">Story tiles</div>
+              <div class="mode-desc">Catch sentence fragments that weave into a tiny story.</div>
+            </div>
+          </label>
+        </div>
+        <div class="mode-select">
+          <div class="mode-title">Duration</div>
+          <label class="mode-option">
+            <input type="radio" name="duration" value="30" checked>
+            <div>
+              <div class="mode-name">30 seconds</div>
+            </div>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="duration" value="60">
+            <div>
+              <div class="mode-name">1 minute</div>
+            </div>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="duration" value="120">
+            <div>
+              <div class="mode-name">2 minutes</div>
+            </div>
+          </label>
+        </div>
+        <button id="start-btn">Start Round</button>
+      </div>
+    </div>
+    <div id="end-overlay" class="overlay">
+      <div class="panel">
+        <h2>Round Complete</h2>
+        <div id="summary"></div>
+        <button id="restart-btn">Play Again</button>
+      </div>
+    </div>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
+
