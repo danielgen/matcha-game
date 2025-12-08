@@ -11,6 +11,7 @@ const modePill = document.getElementById("mode-pill");
 const modeRadios = document.querySelectorAll('input[name="mode"]');
 const durationRadios = document.querySelectorAll('input[name="duration"]');
 const backPlayBtn = document.getElementById("back-play-btn");
+const soundBtn = document.getElementById("sound-btn");
 
 const MODES = {
   CLOUD: "cloud",
@@ -25,6 +26,11 @@ const GRAVITY = 1600;
 
 const background = new Image();
 background.src = "background.png";
+
+const bgMusic = new Audio("sounds/piano-background.mp3");
+bgMusic.loop = true;
+bgMusic.volume = 0.45;
+const meowSounds = [new Audio("sounds/meow1.mp3"), new Audio("sounds/meow2.mp3")];
 
 const spritePaths = {
   stand: "sprites/stand.png",
@@ -207,6 +213,8 @@ let lastInputAt = performance.now();
 let selectedWords = new Set();
 let selectedStoryChoices = new Map();
 let backVisible = false;
+let soundEnabled = true;
+let meowTimer = null;
 
 const keys = {left: false, right: false};
 
@@ -229,6 +237,44 @@ function setBackPlayVisible(show) {
   }
 }
 
+function clearMeowTimer() {
+  if (meowTimer) {
+    clearTimeout(meowTimer);
+    meowTimer = null;
+  }
+}
+
+function scheduleMeow() {
+  clearMeowTimer();
+  if (!soundEnabled || phase !== "play") return;
+  const delay = 5000 + Math.random() * 10000;
+  meowTimer = setTimeout(() => {
+    if (soundEnabled && phase === "play") {
+      const s = pick(meowSounds);
+      s.currentTime = 0;
+      s.play().catch(() => {});
+    }
+    scheduleMeow();
+  }, delay);
+}
+
+function applySoundState() {
+  if (soundEnabled) {
+    bgMusic.play().catch(() => {});
+    scheduleMeow();
+  } else {
+    bgMusic.pause();
+    meowSounds.forEach(s => {
+      s.pause();
+      s.currentTime = 0;
+    });
+    clearMeowTimer();
+  }
+  if (soundBtn) {
+    soundBtn.textContent = `Sound: ${soundEnabled ? "On" : "Off"}`;
+  }
+}
+
 function resetToStartScreen() {
   words = [];
   lastSpawn = 0;
@@ -242,6 +288,7 @@ function resetToStartScreen() {
   summaryEl.innerHTML = "";
   caughtEl.textContent = "0";
   setTimerText(timeLeft);
+  applySoundState();
   cat.x = GAME_WIDTH * 0.5;
   cat.y = GROUND_Y;
   cat.vx = 0;
@@ -269,6 +316,7 @@ function resetRound() {
   selectedStoryChoices = new Map();
   lastInputAt = performance.now();
   summaryEl.innerHTML = "";
+  applySoundState();
   setBackPlayVisible(true);
   setModeLabel();
   cat.x = GAME_WIDTH * 0.5;
@@ -667,7 +715,7 @@ function renderStorySummary() {
     summaryEl.textContent = "No fragments caught this round. Try again!";
     return;
   }
-  summaryEl.innerHTML = `<div class="story-lines">${lines.map(l => `<div>${l}</div>`).join("")}</div>`;
+  summaryEl.textContent = "Story preview above. Adjust lines below.";
   renderStorySelectionControls();
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -711,6 +759,13 @@ restartBtn.addEventListener("click", () => {
 if (backPlayBtn) {
   backPlayBtn.addEventListener("click", () => {
     resetToStartScreen();
+  });
+}
+
+if (soundBtn) {
+  soundBtn.addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    applySoundState();
   });
 }
 
