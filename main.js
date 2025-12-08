@@ -6,10 +6,11 @@ const startOverlay = document.getElementById("start-overlay");
 const endOverlay = document.getElementById("end-overlay");
 const timerEl = document.getElementById("timer");
 const caughtEl = document.getElementById("caught-count");
-const streamEl = document.getElementById("word-stream");
 const summaryEl = document.getElementById("summary");
+const modePill = document.getElementById("mode-pill");
 const modeRadios = document.querySelectorAll('input[name="mode"]');
 const durationRadios = document.querySelectorAll('input[name="duration"]');
+const backPlayBtn = document.getElementById("back-play-btn");
 
 const MODES = {
   CLOUD: "cloud",
@@ -197,12 +198,15 @@ let spawnInterval = 850;
 let caughtCounts = new Map();
 let caughtByCategory = new Map();
 let phase = "idle";
-let mode = MODES.CLOUD;
+let mode = MODES.STORY;
 let lastTick = 0;
 let roundDuration = DEFAULT_ROUND_SECONDS;
 let timeLeft = roundDuration;
 let summaryRendered = false;
 let lastInputAt = performance.now();
+let selectedWords = new Set();
+let selectedStoryChoices = new Map();
+let backVisible = false;
 
 const keys = {left: false, right: false};
 
@@ -210,6 +214,19 @@ function setTimerText(secondsVal) {
   const minutes = Math.floor(secondsVal / 60);
   const seconds = Math.floor(secondsVal % 60);
   timerEl.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function setModeLabel() {
+  if (modePill) {
+    modePill.textContent = mode === MODES.STORY ? "Story" : "Cloud";
+  }
+}
+
+function setBackPlayVisible(show) {
+  backVisible = show;
+  if (backPlayBtn) {
+    backPlayBtn.style.display = show ? "block" : "none";
+  }
 }
 
 function resetToStartScreen() {
@@ -220,8 +237,9 @@ function resetToStartScreen() {
   timeLeft = roundDuration;
   phase = "idle";
   summaryRendered = false;
+  selectedWords = new Set();
+  selectedStoryChoices = new Map();
   summaryEl.innerHTML = "";
-  streamEl.textContent = "";
   caughtEl.textContent = "0";
   setTimerText(timeLeft);
   cat.x = GAME_WIDTH * 0.5;
@@ -235,6 +253,8 @@ function resetToStartScreen() {
   cat.pounceTimer = 0;
   startOverlay.classList.add("visible");
   endOverlay.classList.remove("visible");
+  setBackPlayVisible(false);
+  setModeLabel();
 }
 
 function resetRound() {
@@ -245,8 +265,12 @@ function resetRound() {
   timeLeft = roundDuration;
   phase = "play";
   summaryRendered = false;
+  selectedWords = new Set();
+  selectedStoryChoices = new Map();
   lastInputAt = performance.now();
   summaryEl.innerHTML = "";
+  setBackPlayVisible(true);
+  setModeLabel();
   cat.x = GAME_WIDTH * 0.5;
   cat.y = GROUND_Y;
   cat.vx = 0;
@@ -445,10 +469,8 @@ function updateCaughtUI() {
   const recent = [];
   caughtCounts.forEach((count, word) => {
     total += count;
-    recent.push(`${word}(${count})`);
   });
   caughtEl.textContent = total;
-  streamEl.textContent = recent.slice(-6).join(" · ");
 }
 
 function pounce() {
@@ -476,7 +498,8 @@ function endRound() {
 function renderWordCloud() {
   ctx.fillStyle = "#f7f7f7";
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-  const entries = Array.from(caughtCounts.entries()).sort((a, b) => b[1] - a[1]);
+  initSelectionsForSummary();
+  const entries = buildCloudEntries();
   summaryEl.textContent = entries.length
     ? `You caught ${entries.reduce((s, [, c]) => s + c, 0)} words.`
     : "No words caught this round. Try again!";
@@ -507,6 +530,7 @@ function renderWordCloud() {
     ctx.textBaseline = "middle";
     ctx.fillText(p.word, p.x, p.y);
   });
+  renderCloudSelectionControls(entries);
 }
 
 function totalStoryFragmentsCaught() {
@@ -529,14 +553,62 @@ function pickFragmentForCategory(category) {
   return pool.length ? pick(pool) : "";
 }
 
+function initSelectionsForSummary() {
+  if (selectedWords.size === 0) {
+    caughtCounts.forEach((_, word) => selectedWords.add(word));
+  }
+  storyCategories.forEach(cat => {
+    if (!selectedStoryChoices.has(cat)) {
+      const choice = pickFragmentForCategory(cat);
+      if (choice) selectedStoryChoices.set(cat, choice);
+    }
+  });
+}
+
+function buildCloudEntries() {
+  const entries = Array.from(caughtCounts.entries()).filter(([word]) => selectedWords.has(word));
+  return entries.sort((a, b) => b[1] - a[1]);
+}
+
+function renderCloudSelectionControls(entries) {
+  const uniqueWords = entries.map(([w, c]) => ({word: w, count: c}));
+  if (!uniqueWords.length) return;
+  const container = document.createElement("div");
+  container.className = "selection-panel";
+  const title = document.createElement("div");
+  title.className = "selection-title";
+  title.textContent = "Keep words";
+  container.appendChild(title);
+
+  uniqueWords.forEach(({word, count}) => {
+    const label = document.createElement("label");
+    label.className = "selection-item";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = selectedWords.has(word);
+    input.addEventListener("change", () => {
+      if (input.checked) selectedWords.add(word);
+      else selectedWords.delete(word);
+      summaryRendered = false;
+      renderWordCloud();
+    });
+    const text = document.createElement("span");
+    text.textContent = `${word} (${count})`;
+    label.appendChild(input);
+    label.appendChild(text);
+    container.appendChild(label);
+  });
+  summaryEl.appendChild(container);
+}
+
 function buildStoryLines() {
   if (totalStoryFragmentsCaught() === 0) return [];
   const selections = {
-    time: pickFragmentForCategory("time"),
-    mood: pickFragmentForCategory("mood"),
-    self: pickFragmentForCategory("self"),
-    desire: pickFragmentForCategory("desire"),
-    movement: pickFragmentForCategory("movement")
+    time: selectedStoryChoices.get("time") || pickFragmentForCategory("time"),
+    mood: selectedStoryChoices.get("mood") || pickFragmentForCategory("mood"),
+    self: selectedStoryChoices.get("self") || pickFragmentForCategory("self"),
+    desire: selectedStoryChoices.get("desire") || pickFragmentForCategory("desire"),
+    movement: selectedStoryChoices.get("movement") || pickFragmentForCategory("movement")
   };
   return [
     `${selections.time}, ${selections.mood}.`,
@@ -546,15 +618,57 @@ function buildStoryLines() {
   ];
 }
 
+function renderStorySelectionControls() {
+  const container = document.createElement("div");
+  container.className = "selection-panel";
+  const title = document.createElement("div");
+  title.className = "selection-title";
+  title.textContent = "You grabbed many! Pick one per line";
+  container.appendChild(title);
+
+  storyCategories.forEach(cat => {
+    const bucket = caughtByCategory.get(cat);
+    if (!bucket || bucket.size <= 1) return;
+    const wrapper = document.createElement("div");
+    wrapper.className = "selection-item selection-select";
+    const label = document.createElement("div");
+    label.textContent = cat;
+    const select = document.createElement("select");
+    Array.from(bucket.entries())
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([text, count]) => {
+        const opt = document.createElement("option");
+        opt.value = text;
+        opt.textContent = text;
+        if (selectedStoryChoices.get(cat) === text) opt.selected = true;
+        select.appendChild(opt);
+      });
+    select.addEventListener("change", e => {
+      selectedStoryChoices.set(cat, e.target.value);
+      summaryRendered = false;
+      renderStorySummary();
+    });
+    wrapper.appendChild(label);
+    wrapper.appendChild(select);
+    container.appendChild(wrapper);
+  });
+
+  if (container.childElementCount > 1) {
+    summaryEl.appendChild(container);
+  }
+}
+
 function renderStorySummary() {
   ctx.fillStyle = "#f7f3ec";
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  initSelectionsForSummary();
   const lines = buildStoryLines();
   if (!lines.length) {
     summaryEl.textContent = "No fragments caught this round. Try again!";
     return;
   }
   summaryEl.innerHTML = `<div class="story-lines">${lines.map(l => `<div>${l}</div>`).join("")}</div>`;
+  renderStorySelectionControls();
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#1c2b3a";
@@ -594,9 +708,16 @@ restartBtn.addEventListener("click", () => {
   resetToStartScreen();
 });
 
+if (backPlayBtn) {
+  backPlayBtn.addEventListener("click", () => {
+    resetToStartScreen();
+  });
+}
+
 modeRadios.forEach(radio => {
   radio.addEventListener("change", e => {
     mode = e.target.value === MODES.STORY ? MODES.STORY : MODES.CLOUD;
+    setModeLabel();
   });
 });
 
@@ -621,6 +742,11 @@ window.addEventListener("keydown", e => {
   if (e.code === "Space") {
     e.preventDefault();
     pounce();
+  }
+  if (e.code === "Escape") {
+    e.preventDefault();
+    resetToStartScreen();
+    return;
   }
   lastInputAt = performance.now();
 });

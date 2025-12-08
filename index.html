@@ -18,11 +18,9 @@
         <div class="label">Caught</div>
         <div id="caught-count" class="value">0</div>
       </div>
-      <div class="hud-right">
-        <div class="label">Words</div>
-        <div id="word-stream" class="value"></div>
-      </div>
+      <div class="hud-mode" id="mode-pill">Story</div>
     </div>
+    <button id="back-play-btn" class="hud-button">← Back</button>
     <div id="start-overlay" class="overlay visible">
       <div class="panel">
         <h1>Window Cat Wordcatcher</h1>
@@ -30,14 +28,14 @@
         <div class="mode-select">
           <div class="mode-title">Mode</div>
           <label class="mode-option">
-            <input type="radio" name="mode" value="cloud" checked>
+            <input type="radio" name="mode" value="cloud">
             <div>
               <div class="mode-name">Word cloud</div>
               <div class="mode-desc">Catch words, see them bloom at the end.</div>
             </div>
           </label>
           <label class="mode-option">
-            <input type="radio" name="mode" value="story">
+            <input type="radio" name="mode" value="story" checked>
             <div>
               <div class="mode-name">Story tiles</div>
               <div class="mode-desc">Catch sentence fragments that weave into a tiny story.</div>
