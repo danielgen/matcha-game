@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agnes in the Eternal City</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      body {
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .overlay {
+        background: rgba(0, 0, 0, 0.5);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .content {
+        text-align: center;
+        color: #fdfdfd;
+        padding: 2rem 3rem;
+        border-radius: 16px;
+        backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        font-size: clamp(2.2rem, 4vw, 3rem);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+      }
+
+      #countdown {
+        font-size: clamp(1.6rem, 3.2vw, 2.3rem);
+        font-weight: 500;
+        letter-spacing: 0.06em;
+      }
+
+      @media (max-width: 600px) {
+        .content {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay">
+      <main class="content">
+        <h1>Agnes in the Eternal City</h1>
+        <div id="countdown"></div>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        // Background image rotation (every 5 seconds)
+        const backgroundImages = [
+          "rome_images/15941-share-image.jpg",
+          "rome_images/2aabeeadb191282ddfe7125088a26027-Rome pantheon interior.jpg",
+          "rome_images/982248406303-1200x750.avif",
+          "rome_images/98786352ab62965a07c516ba5d449e8a.jpg",
+          "rome_images/Fontana-del-Moro-Piazza-Navona-Rome-how-to-see-rome-in-a-day-feature.jpg",
+          "rome_images/image.jpg",
+          "rome_images/images (1).jpeg",
+          "rome_images/images.jpeg",
+          "rome_images/italy-rome-forum-sunset-istk-1800x0-c-default.jpg",
+          "rome_images/massimo-listri_musei-vaticani-vii-1.jpeg",
+          "rome_images/musei-rdn-366242.660x368.jpg",
+          "rome_images/Quartiere-Coppedè-Roma-iStock.jpg",
+          "rome_images/Quartiere-Coppede1-4.webp",
+          "rome_images/Roma in breve.jpg",
+          "rome_images/rome-aqueduct-park-1747808198.jpg",
+          "rome_images/Rome-Piazza-di-Spagna.jpg",
+          "rome_images/slide-italy-rome-piazza-navona.jpg",
+          "rome_images/the-ballroom-hall.jpg",
+          "rome_images/torkos-akos-y818ZdbVd2M-unsplash-scaled.jpg",
+          "rome_images/Trevi-Fountain-rome-2-scaled.webp",
+          "rome_images/visit-rome-italy.jpg",
+        ];
+
+        let bgIndex = 0;
+        const bodyEl = document.body;
+
+        function setBackgroundImage() {
+          if (!backgroundImages.length) return;
+          bodyEl.style.backgroundImage = 'url("' + backgroundImages[bgIndex] + '")';
+          bgIndex = (bgIndex + 1) % backgroundImages.length;
+        }
+
+        // Initial background and rotation every 5 seconds
+        setBackgroundImage();
+        setInterval(setBackgroundImage, 5000);
+
+        // Target time: 29 Jan 2026, 21:50 (local time of the viewer's browser)
+        const target = new Date(2026, 0, 29, 21, 50, 0, 0).getTime();
+        const el = document.getElementById("countdown");
+
+        function updateCountdown() {
+          const now = Date.now();
+          let diff = target - now;
+
+          if (diff <= 0) {
+            el.textContent = "It's time.";
+            clearInterval(timer);
+            return;
+          }
+
+          const second = 1000;
+          const minute = second * 60;
+          const hour = minute * 60;
+          const day = hour * 24;
+
+          const days = Math.floor(diff / day);
+          diff %= day;
+          const hours = Math.floor(diff / hour);
+          diff %= hour;
+          const minutes = Math.floor(diff / minute);
+          diff %= minute;
+          const seconds = Math.floor(diff / second);
+
+          el.textContent =
+            days +
+            " days " +
+            hours.toString().padStart(2, "0") +
+            " hours " +
+            minutes.toString().padStart(2, "0") +
+            " minutes " +
+            seconds.toString().padStart(2, "0") +
+            " seconds";
+        }
+
+        updateCountdown();
+        const timer = setInterval(updateCountdown, 1000);
+      })();
+    </script>
+  </body>
+</html>
+
+
