@@ -40,10 +40,15 @@
       .content {
         text-align: center;
         color: #fdfdfd;
-        padding: 2rem 3rem;
-        border-radius: 16px;
-        backdrop-filter: blur(8px);
-        background: rgba(0, 0, 0, 0.3);
+        padding: 2.5rem 3.5rem;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        background: radial-gradient(
+          circle at top,
+          rgba(255, 255, 255, 0.15),
+          rgba(0, 0, 0, 0.7)
+        );
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
       }
 
       h1 {
@@ -51,17 +56,59 @@
         letter-spacing: 0.08em;
         text-transform: uppercase;
         margin-bottom: 1.5rem;
+        text-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
       }
 
-      #countdown {
-        font-size: clamp(1.6rem, 3.2vw, 2.3rem);
-        font-weight: 500;
+      .countdown {
+        display: flex;
+        gap: 1.25rem;
+        justify-content: center;
+        align-items: stretch;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .time-block {
+        min-width: 4.5rem;
+        padding: 0.9rem 1rem;
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(6px);
+      }
+
+      .time-value {
+        display: block;
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        font-weight: 600;
+        letter-spacing: 0.12em;
+      }
+
+      .time-label {
+        display: block;
+        margin-top: 0.2rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        opacity: 0.85;
+      }
+
+      .note {
+        margin-top: 1.4rem;
+        font-size: 0.9rem;
         letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0.9;
       }
 
       @media (max-width: 600px) {
         .content {
-          padding: 1.5rem;
+          padding: 1.8rem 1.6rem;
+        }
+
+        .time-block {
+          min-width: 4.1rem;
         }
       }
     </style>
@@ -70,7 +117,25 @@
     <div class="overlay">
       <main class="content">
         <h1>Agnes in the Eternal City</h1>
-        <div id="countdown"></div>
+        <div id="countdown" class="countdown">
+          <div class="time-block">
+            <span id="days" class="time-value">0</span>
+            <span class="time-label">Days</span>
+          </div>
+          <div class="time-block">
+            <span id="hours" class="time-value">00</span>
+            <span class="time-label">Hours</span>
+          </div>
+          <div class="time-block">
+            <span id="minutes" class="time-value">00</span>
+            <span class="time-label">Minutes</span>
+          </div>
+          <div class="time-block">
+            <span id="seconds" class="time-value">00</span>
+            <span class="time-label">Seconds</span>
+          </div>
+        </div>
+        <div class="note" id="countdown-note"></div>
       </main>
     </div>
 
@@ -116,14 +181,26 @@
 
         // Target time: 29 Jan 2026, 21:50 (local time of the viewer's browser)
         const target = new Date(2026, 0, 29, 21, 50, 0, 0).getTime();
-        const el = document.getElementById("countdown");
+        const daysEl = document.getElementById("days");
+        const hoursEl = document.getElementById("hours");
+        const minutesEl = document.getElementById("minutes");
+        const secondsEl = document.getElementById("seconds");
+        const noteEl = document.getElementById("countdown-note");
 
         function updateCountdown() {
           const now = Date.now();
           let diff = target - now;
 
           if (diff <= 0) {
-            el.textContent = "It's time.";
+            if (noteEl) {
+              noteEl.textContent = "It’s time.";
+            }
+            if (daysEl && hoursEl && minutesEl && secondsEl) {
+              daysEl.textContent = "0";
+              hoursEl.textContent = "00";
+              minutesEl.textContent = "00";
+              secondsEl.textContent = "00";
+            }
             clearInterval(timer);
             return;
           }
@@ -141,15 +218,16 @@
           diff %= minute;
           const seconds = Math.floor(diff / second);
 
-          el.textContent =
-            days +
-            " days " +
-            hours.toString().padStart(2, "0") +
-            " hours " +
-            minutes.toString().padStart(2, "0") +
-            " minutes " +
-            seconds.toString().padStart(2, "0") +
-            " seconds";
+          if (daysEl && hoursEl && minutesEl && secondsEl) {
+            daysEl.textContent = String(days);
+            hoursEl.textContent = hours.toString().padStart(2, "0");
+            minutesEl.textContent = minutes.toString().padStart(2, "0");
+            secondsEl.textContent = seconds.toString().padStart(2, "0");
+          }
+
+          if (noteEl) {
+            noteEl.textContent = "Until 29 January 2026, 21:50";
+          }
         }
 
         updateCountdown();
